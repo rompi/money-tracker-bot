@@ -1,0 +1,49 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Build output
+/bin/
+/build/
+/dist/
+*.log
+
+# Go modules
+/vendor/
+/go.sum
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.DS_Store
+*.iml
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Environment config
+.env
+.env.*
+
+# Dependency management
+Gopkg.lock
+Gopkg.toml
+
+# Generated files
+coverage.out
+
+# Temporary files
+*.tmp
+*.bak
+*.old
+/downloaded_images/
+google-service-account.json
