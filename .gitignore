@@ -47,3 +47,4 @@ coverage.out
 *.old
 /downloaded_images/
 google-service-account.json
+.qodo
