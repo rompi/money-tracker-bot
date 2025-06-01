@@ -30,19 +30,17 @@ func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string,
 
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
-			trx.TransactionDatetime,
-			trx.Title,
-			trx.FileID,
-			trx.Amount,
+			trx.TransactionDate,
 			trx.Category,
+			"",
 			trx.Notes,
-			trx.DestinationName,
-			trx.SourceAccount,
+			trx.Amount,
 			trx.CreatedBy,
+			trx.FileID,
 		}},
 	}
 
-	_, err := s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "Expense Tracker!A:I", values).ValueInputOption("USER_ENTERED").Do()
+	_, err := s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:F", values).ValueInputOption("USER_ENTERED").Do()
 
 	if err != nil {
 		log.Fatalf("Unable to insert data to sheet: %v", err)
@@ -59,21 +57,4 @@ func (s SpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId stri
 	for _, value := range values.Values {
 		fmt.Println(value)
 	}
-}
-
-func (s SpreadsheetService) Update(ctx context.Context, spreadsheetId string) {
-
-	values := &sheets.ValueRange{
-		Values: [][]interface{}{{
-			"Japan",
-			"Software Engineer Lead",
-		}},
-	}
-
-	_, err := s.Sheet.Spreadsheets.Values.Update(spreadsheetId, "Sheet1!B2:C2", values).ValueInputOption("USER_ENTERED").Do()
-
-	if err != nil {
-		log.Fatalf("Unable to insert data to sheet: %v", err)
-	}
-
 }

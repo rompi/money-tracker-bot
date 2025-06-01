@@ -8,6 +8,7 @@ import (
 	"os"
 	transaction_domain "rompi/gobot/internal/domain/transactions"
 	"strings"
+	"time"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
@@ -57,14 +58,12 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 
 			Fields:
 			- title (summary of the transaction notes)
-			- transaction_datetime (format always YYYY-MM-DD hh:mm)
+			- transaction_date (format always YYYY-MM-DD)
 			- amount (in rupiah, format 1,000,000 for transaction with amont 1 million. if it is 100k then output should be 100,000)
-			- amount_currency (USD/IDR)
 			- notes (details of the transaction, containing items bought)
-			- destination_name
 			- destination_number
 			- source_account (only GOPAY / BCA / OVO / DANA / ISAKU / MANDIRI / BNI / BRI / CASH)
-			- category (food/travel/entertainment/transport/housing/fashion/other, based on notes)
+			- category (Groceries / Utilities / Entertainment / Gifting / Household / Eating Out / Health / Transportation / Savings / Emergency / Rent House)
 			- file_id ` + fileID[1] + `
 
 			IMPORTANT:
@@ -75,14 +74,12 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 		
 			{
 				"title": "Transfer to ABC Cafe",
-				"transaction_datetime": "2025-03-30T12:30:00",
+				"transaction_date": "2025-03-30",
 				"amount": "150",
-				"amount_currency": "USD",
 				"notes": "Lunch at ABC cafe",
-				"destination_name": "ABC Cafe",
 				"destination_number": "0524012911",
 				"source_account": "Gopay",
-				"category": "food",
+				"category": "Groceries",
 				"file_id": "photo_1743586322.jpg"
 			}`),
 	}
@@ -123,6 +120,74 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 	} else {
 		log.Printf("File %s removed successfully", imgPath)
 	}
+	return &transaction, nil
+}
+
+func (c *GeminiClient) TextToTransaction(ctx context.Context, message string) (*transaction_domain.Transaction, error) {
+
+	// get time.now in date format
+	currentDate := time.Now().Format("2006-01-02")
+
+	// Create the request.
+	req := []genai.Part{
+		genai.Text(`Please extract the message ` + message + ` and return it as valid JSON.
+
+			Fields:
+			- title (summary of the transaction notes)
+			- transaction_date should be ` + currentDate + ` (format always YYYY-MM-DD)
+			- amount (in rupiah, format 1,000,000 for transaction with amont 1 million. if it is 100k then output should be 100,000)
+			- notes (details of the transaction, containing items bought)
+			- category (Groceries / Utilities / Entertainment / Gifting / Household / Eating Out / Health / Transportation / Savings / Emergency / Rent House)
+			- file_id should be empty
+
+			IMPORTANT:
+			Respond ONLY with raw JSON.
+			No explanation, no formatting, no code blocks.
+
+			Example:
+		
+			{
+				"title": "Transfer to ABC Cafe",
+				"transaction_date": "2025-03-30",
+				"amount": "150",
+				"notes": "Lunch at ABC cafe",
+				"destination_number": "0524012911",
+				"source_account": "Gopay",
+				"category": "Groceries",
+				"file_id": "photo_1743586322.jpg"
+			}`),
+	}
+
+	// Generate content.
+	resp, err := c.Model.GenerateContent(ctx, req...)
+	if err != nil {
+		panic(err)
+	}
+
+	var transaction transaction_domain.Transaction
+
+	for _, cand := range resp.Candidates {
+		if cand.Content == nil || len(cand.Content.Parts) == 0 {
+			continue
+		}
+
+		var jsonText string
+		for _, part := range cand.Content.Parts {
+			if textPart, ok := part.(genai.Text); ok {
+
+				fmt.Println("textPart:", textPart)
+				jsonText += fmt.Sprintf("%s", textPart)
+			}
+		}
+		jsonText = trimJson(jsonText)
+		errr := json.Unmarshal([]byte(jsonText), &transaction)
+		if errr != nil {
+			log.Printf("Failed to parse JSON: %v\nResponse:\n%s", errr, jsonText)
+			continue
+		}
+	}
+
+	fmt.Print("Transaction: ", transaction)
 	return &transaction, nil
 }
 

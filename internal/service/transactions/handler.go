@@ -42,3 +42,17 @@ func (t *TransactionService) HandleImageInput(ctx context.Context, imagePath str
 	trx.CreatedBy = uploader
 	return trx, nil
 }
+
+func (t *TransactionService) HandleTextInput(ctx context.Context, imagePath string, uploader string, aiPort aiport.AiPort) (*transaction_domain.Transaction, error) {
+	ai := t.DefaultAiPort
+	if aiPort != nil {
+		ai = aiPort
+	}
+
+	trx, err := ai.TextToTransaction(ctx, imagePath)
+	if err != nil {
+		return nil, err
+	}
+	trx.CreatedBy = uploader
+	return trx, nil
+}

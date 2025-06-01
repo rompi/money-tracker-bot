@@ -74,6 +74,8 @@ func (t *TelegramHandler) Start() {
 			handleDocument(bot, update.Message)
 		} else if update.Message.Photo != nil {
 			t.handlePhoto(bot, update.Message)
+		} else {
+			t.handleMessage(bot, update.Message)
 		}
 	}
 }
@@ -135,6 +137,18 @@ func (t *TelegramHandler) handlePhoto(bot *tgbotapi.BotAPI, msg *tgbotapi.Messag
 	t.TransactionService.SaveTransaction(*transaction)
 
 	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved photo ✅ as %s", transaction.Title)))
+}
+
+func (t *TelegramHandler) handleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+	transaction, err := t.TransactionService.HandleTextInput(context.TODO(), msg.Text, msg.From.UserName, nil)
+	if err != nil {
+		log.Println("Error handling text input:", err)
+		return
+	}
+
+	t.TransactionService.SaveTransaction(*transaction)
+
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved text ✅ as %s", transaction.Title)))
 }
 
 func downloadFile(bot *tgbotapi.BotAPI, fileID, localPath string) error {

@@ -10,4 +10,5 @@ type ITransaction interface {
 	// SaveTransactions saves the transactions to the database
 	SaveTransaction(trx transaction_domain.Transaction) error
 	HandleImageInput(context.Context, string, string, aiport.AiPort) (*transaction_domain.Transaction, error)
+	HandleTextInput(context.Context, string, string, aiport.AiPort) (*transaction_domain.Transaction, error)
 }

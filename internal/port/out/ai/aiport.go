@@ -8,4 +8,5 @@ import (
 type AiPort interface {
 	GenerateContent(ctx context.Context, prompt string)
 	ReadImageToTransaction(ctx context.Context, imgPath string) (*transaction_domain.Transaction, error)
+	TextToTransaction(ctx context.Context, message string) (*transaction_domain.Transaction, error)
 }
