@@ -125,7 +125,8 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 
 func (c *GeminiClient) TextToTransaction(ctx context.Context, message string) (*transaction_domain.Transaction, error) {
 
-	// get time.now in date format
+	// get time.now in jakarta timezone
+
 	currentDate := time.Now().Format("2006-01-02")
 
 	// Create the request.

@@ -136,7 +136,8 @@ func (t *TelegramHandler) handlePhoto(bot *tgbotapi.BotAPI, msg *tgbotapi.Messag
 
 	t.TransactionService.SaveTransaction(*transaction)
 
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved photo ✅ as %s", transaction.Title)))
+	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved photo ✅ as %s \n\ntotal amount %s. link = %s", transaction.Notes, transaction.Amount, "https://docs.google.com/spreadsheets/d/"+spreadsheetId)))
 }
 
 func (t *TelegramHandler) handleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
@@ -148,7 +149,8 @@ func (t *TelegramHandler) handleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Mess
 
 	t.TransactionService.SaveTransaction(*transaction)
 
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved text ✅ as %s", transaction.Title)))
+	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved text ✅ as %s \n\ntotal amount %s. link = %s", transaction.Notes, transaction.Amount, "https://docs.google.com/spreadsheets/d/"+spreadsheetId)))
 }
 
 func downloadFile(bot *tgbotapi.BotAPI, fileID, localPath string) error {

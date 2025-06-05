@@ -14,7 +14,7 @@ all: run
 .PHONY: build
 build:
 	@echo "Building $(BINARY_NAME)..."
-	go build -o $(BINARY_NAME) $(MAIN_PKG)
+	GOOS=linux GOARCH=amd64 go build -o $(BINARY_NAME) $(MAIN_PKG)
 
 ## Run the bot
 .PHONY: run
