@@ -1,23 +1,28 @@
 package transactions
 
 import (
-	"context"
-	"os"
-	"rompi/gobot/internal/adapters/google/spreadsheet"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
-	aiport "rompi/gobot/internal/port/out/ai"
+  "context"
+  "os"
+  transaction_domain "rompi/gobot/internal/domain/transactions"
+  aiport "rompi/gobot/internal/port/out/ai"
 )
 
 type TransactionService struct {
-	DefaultAiPort      aiport.AiPort
-	SpreadsheetService *spreadsheet.SpreadsheetService
+  DefaultAiPort      aiport.AiPort
+  SpreadsheetService SpreadsheetServicePort
 }
 
-func NewTransactionService(ai aiport.AiPort, sheets *spreadsheet.SpreadsheetService) *TransactionService {
-	return &TransactionService{
-		DefaultAiPort:      ai,
-		SpreadsheetService: sheets,
-	}
+// SpreadsheetServicePort abstracts spreadsheet operations for testability
+type SpreadsheetServicePort interface {
+  AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction)
+  GetCellValue(ctx context.Context, spreadsheetId string)
+}
+
+func NewTransactionService(ai aiport.AiPort, sheets SpreadsheetServicePort) *TransactionService {
+   return &TransactionService{
+	   DefaultAiPort:      ai,
+	   SpreadsheetService: sheets,
+   }
 }
 
 func (t *TransactionService) SaveTransaction(trx transaction_domain.Transaction) error {
