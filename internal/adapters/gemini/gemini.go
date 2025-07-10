@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"rompi/gobot/internal/common"
+
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"
 )
@@ -43,70 +45,6 @@ func (c *GeminiClient) GenerateContent(ctx context.Context, prompt string) {
 	// For testability, we do not process the response here
 }
 
-// buildPrompt centralizes the construction of prompts for Gemini
-func buildPrompt(params map[string]string) string {
-	fileID := params["fileID"]
-	message := params["message"]
-	currentDate := params["currentDate"]
-	isImage := params["isImage"] == "true"
-
-	fields := `Fields:
-- title (summary of the transaction notes)
-- transaction_date (format always YYYY-MM-DD)
-- amount (in rupiah, format 1,000,000 for transaction with amont 1 million. if it is 100k then output should be 100,000)
-- notes (details of the transaction, containing items bought)
-- category (Groceries / Utilities / Entertainment / Gifting / Household / Eating Out / Health / Transportation / Savings / Emergency / Rent House)`
-	if isImage {
-		fields += `
-- destination_number
-- source_account (only GOPAY / BCA / OVO / DANA / ISAKU / MANDIRI / BNI / BRI / CASH)
-- file_id ` + fileID
-	} else {
-		fields += `
-- file_id should be empty`
-	}
-
-	var inputDesc string
-	if isImage {
-		inputDesc = "from the image"
-	} else {
-		inputDesc = fmt.Sprintf("from the following message: %s", message)
-	}
-
-	var dateLine string
-	if isImage {
-		dateLine = ""
-	} else {
-		dateLine = fmt.Sprintf("- transaction_date should be %s (format always YYYY-MM-DD)\n", currentDate)
-	}
-
-	exampleFileID := fileID
-	if !isImage {
-		exampleFileID = ""
-	}
-
-	prompt := fmt.Sprintf(`Please extract the following data %s and return it as valid JSON.
-
-%s
-%sIMPORTANT:
-Respond ONLY with raw JSON.
-No explanation, no formatting, no code blocks.
-
-Example:
-{
-	"title": "Transfer to ABC Cafe",
-	"transaction_date": "2025-03-30",
-	"amount": "150",
-	"notes": "Lunch at ABC cafe",
-	"destination_number": "0524012911",
-	"source_account": "Gopay",
-	"category": "Groceries",
-	"file_id": "%s"
-}`,
-		inputDesc, fields, dateLine, exampleFileID)
-	return prompt
-}
-
 func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath string) (*transaction_domain.Transaction, error) {
 	imgData, err := os.ReadFile(imgPath)
 	if err != nil {
@@ -118,9 +56,9 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 		fileID = parts[len(parts)-1]
 	}
 
-	prompt := buildPrompt(map[string]string{
-		"isImage": "true",
-		"fileID":  fileID,
+	prompt := common.BuildPrompt(common.PromptParams{
+		IsImage: true,
+		FileID:  fileID,
 	})
 
 	req := []genai.Part{
@@ -160,10 +98,10 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 func (c *GeminiClient) TextToTransaction(ctx context.Context, message string) (*transaction_domain.Transaction, error) {
 	currentDate := time.Now().Format("2006-01-02")
 
-	prompt := buildPrompt(map[string]string{
-		"isImage":     "false",
-		"message":     message,
-		"currentDate": currentDate,
+	prompt := common.BuildPrompt(common.PromptParams{
+		IsImage:     false,
+		Message:     message,
+		CurrentDate: currentDate,
 	})
 
 	req := []genai.Part{
