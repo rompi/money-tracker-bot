@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	transaction_domain "money-tracker-bot/internal/domain/transactions"
+	"time"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
@@ -27,6 +28,12 @@ func NewSpreadsheetService() *SpreadsheetService {
 }
 
 func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) {
+	// Add createdAt as UTC+7 timestamp (column G)
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		log.Fatalf("Unable to load Asia/Bangkok timezone: %v", err)
+	}
+	createdAt := time.Now().In(loc).Format("2006-01-02 15:04:05")
 
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
@@ -37,10 +44,12 @@ func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string,
 			trx.Amount,
 			trx.CreatedBy,
 			trx.FileID,
+			createdAt,
 		}},
 	}
 
-	_, err := s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:F", values).ValueInputOption("USER_ENTERED").Do()
+	// Update range to include column G
+	_, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
 
 	if err != nil {
 		log.Fatalf("Unable to insert data to sheet: %v", err)
