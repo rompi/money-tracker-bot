@@ -2,8 +2,8 @@ package transactions
 
 import (
 	"context"
-	"rompi/gobot/internal/adapters/google/spreadsheet"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
+	"money-tracker-bot/internal/adapters/google/spreadsheet"
+	transaction_domain "money-tracker-bot/internal/domain/transactions"
 	"testing"
 )
 

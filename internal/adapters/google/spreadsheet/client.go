@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
+	transaction_domain "money-tracker-bot/internal/domain/transactions"
 
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"

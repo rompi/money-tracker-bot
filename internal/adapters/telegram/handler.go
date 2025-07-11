@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"money-tracker-bot/internal/service/transactions"
 	"net/http"
 	"os"
-	"rompi/gobot/internal/service/transactions"
 	"strconv"
 	"strings"
 	"time"
@@ -15,16 +15,30 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
+// BotAPI is an interface for sending messages (for testability)
+type BotAPI interface {
+	Send(c tgbotapi.Chattable) (tgbotapi.Message, error)
+}
+
 type TelegramHandler struct {
-	Telebot            *tgbotapi.BotAPI
+	Telebot            BotAPI
 	TransactionService transactions.ITransaction
 }
 
+// NewTelegramHandler creates a TelegramHandler with a real bot (for production)
 func NewTelegramHandler(token string, transactionService transactions.ITransaction) *TelegramHandler {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
 		log.Panic(err)
 	}
+	return &TelegramHandler{
+		Telebot:            bot,
+		TransactionService: transactionService,
+	}
+}
+
+// NewTelegramHandlerWithBot allows injecting a bot instance (for testing)
+func NewTelegramHandlerWithBot(bot BotAPI, transactionService transactions.ITransaction) *TelegramHandler {
 	return &TelegramHandler{
 		Telebot:            bot,
 		TransactionService: transactionService,
@@ -41,14 +55,17 @@ type StoredFile struct {
 var storedFiles []StoredFile
 
 func (t *TelegramHandler) Start() {
-	bot := t.Telebot
-	bot.Debug = true
-	log.Printf("Authorized on account %s", bot.Self.UserName)
+	realBot, ok := t.Telebot.(*tgbotapi.BotAPI)
+	if !ok {
+		log.Panic("Telebot is not a *tgbotapi.BotAPI")
+	}
+	realBot.Debug = true
+	log.Printf("Authorized on account %s", realBot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 
-	updates := bot.GetUpdatesChan(u)
+	updates := realBot.GetUpdatesChan(u)
 
 	for update := range updates {
 		if update.Message == nil {
@@ -58,29 +75,29 @@ func (t *TelegramHandler) Start() {
 		if update.Message.IsCommand() {
 			switch update.Message.Command() {
 			case "list":
-				handleListCommand(bot, update.Message)
+				handleListCommand(t.Telebot, update.Message)
 			case "view":
-				handleViewCommand(bot, update.Message)
+				handleViewCommand(realBot, update.Message)
 			case "download":
-				handleDownloadCommand(bot, update.Message)
+				handleDownloadCommand(realBot, update.Message)
 			default:
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Unknown command.")
-				bot.Send(msg)
+				t.Telebot.Send(msg)
 			}
 			continue
 		}
 
 		if update.Message.Document != nil {
-			handleDocument(bot, update.Message)
+			handleDocument(t.Telebot, update.Message)
 		} else if update.Message.Photo != nil {
-			t.handlePhoto(bot, update.Message)
+			t.handlePhoto(t.Telebot, update.Message)
 		} else {
-			t.handleMessage(bot, update.Message)
+			t.handleMessage(t.Telebot, update.Message)
 		}
 	}
 }
 
-func handleListCommand(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+func handleListCommand(bot BotAPI, msg *tgbotapi.Message) {
 	if len(storedFiles) == 0 {
 		bot.Send(tgbotapi.NewMessage(msg.Chat.ID, "No files received yet."))
 		return
@@ -94,7 +111,7 @@ func handleListCommand(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, text))
 }
 
-func handleDocument(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+func handleDocument(bot BotAPI, msg *tgbotapi.Message) {
 	doc := msg.Document
 	fileID := doc.FileID
 	fileName := doc.FileName
@@ -109,14 +126,20 @@ func handleDocument(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
 	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved %s ✅", fileName)))
 }
 
-func (t *TelegramHandler) handlePhoto(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 	photos := msg.Photo
 	largest := photos[len(photos)-1]
 	fileID := largest.FileID
 	fileName := fmt.Sprintf("%s.jpg", fileID)
 	localPath := "downloads/" + fileName
 
-	err := downloadFile(bot, fileID, localPath)
+	// Cast to *tgbotapi.BotAPI for downloadFile
+	realBot, ok := bot.(*tgbotapi.BotAPI)
+	if !ok {
+		log.Println("Bot is not *tgbotapi.BotAPI, skipping downloadFile")
+		return
+	}
+	err := downloadFile(realBot, fileID, localPath)
 	if err != nil {
 		log.Println("Download error:", err)
 		return
@@ -128,6 +151,7 @@ func (t *TelegramHandler) handlePhoto(bot *tgbotapi.BotAPI, msg *tgbotapi.Messag
 		User:     msg.From.UserName,
 		Date:     time.Now(),
 	})
+
 	transaction, err := t.TransactionService.HandleImageInput(context.TODO(), localPath, msg.From.UserName, nil)
 	if err != nil {
 		log.Println("Error handling image input:", err)
@@ -137,10 +161,11 @@ func (t *TelegramHandler) handlePhoto(bot *tgbotapi.BotAPI, msg *tgbotapi.Messag
 	t.TransactionService.SaveTransaction(*transaction)
 
 	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+
 	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved photo ✅ as %s \n\ntotal amount %s. link = %s", transaction.Notes, transaction.Amount, "https://docs.google.com/spreadsheets/d/"+spreadsheetId)))
 }
 
-func (t *TelegramHandler) handleMessage(bot *tgbotapi.BotAPI, msg *tgbotapi.Message) {
+func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
 	transaction, err := t.TransactionService.HandleTextInput(context.TODO(), msg.Text, msg.From.UserName, nil)
 	if err != nil {
 		log.Println("Error handling text input:", err)

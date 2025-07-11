@@ -1,4 +1,4 @@
-module rompi/gobot
+module money-tracker-bot
 
 go 1.23.0
 

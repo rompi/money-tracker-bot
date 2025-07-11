@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	transaction_domain "money-tracker-bot/internal/domain/transactions"
 	"os"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
 	"strings"
 	"time"
 
-	"rompi/gobot/internal/common"
+	"money-tracker-bot/internal/common"
 
 	"github.com/google/generative-ai-go/genai"
 	"google.golang.org/api/option"

@@ -2,7 +2,7 @@ package spreadsheet
 
 import (
 	"context"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
+	transaction_domain "money-tracker-bot/internal/domain/transactions"
 )
 
 type MockSpreadsheetService struct{}

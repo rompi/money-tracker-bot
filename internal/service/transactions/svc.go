@@ -2,8 +2,8 @@ package transactions
 
 import (
 	"context"
-	transaction_domain "rompi/gobot/internal/domain/transactions"
-	aiport "rompi/gobot/internal/port/out/ai"
+	transaction_domain "money-tracker-bot/internal/domain/transactions"
+	aiport "money-tracker-bot/internal/port/out/ai"
 )
 
 type ITransaction interface {

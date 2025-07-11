@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
+	"money-tracker-bot/internal/adapters/gemini"
+	"money-tracker-bot/internal/adapters/google/spreadsheet"
+	"money-tracker-bot/internal/adapters/telegram"
+	"money-tracker-bot/internal/service/transactions"
 	"os"
-	"rompi/gobot/internal/adapters/gemini"
-	"rompi/gobot/internal/adapters/google/spreadsheet"
-	"rompi/gobot/internal/adapters/telegram"
-	"rompi/gobot/internal/service/transactions"
 
 	"github.com/joho/godotenv"
 )
