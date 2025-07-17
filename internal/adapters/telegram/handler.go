@@ -160,9 +160,19 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 
 	t.TransactionService.SaveTransaction(*transaction)
 
-	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	// spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID") // no longer used in message
 
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved photo ✅ as %s \n\ntotal amount %s. link = %s", transaction.Notes, transaction.Amount, "https://docs.google.com/spreadsheets/d/"+spreadsheetId)))
+	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+	rupiah := formatRupiah(transaction.Amount)
+	msgText := fmt.Sprintf(
+		"Saved photo ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s",
+		transaction.Category,
+		rupiah,
+		transaction.Notes,
+		spreadsheetLink,
+	)
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
 func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
@@ -175,7 +185,40 @@ func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
 	t.TransactionService.SaveTransaction(*transaction)
 
 	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, fmt.Sprintf("Saved text ✅ as %s \n\ntotal amount %s. link = %s", transaction.Notes, transaction.Amount, "https://docs.google.com/spreadsheets/d/"+spreadsheetId)))
+	spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+	rupiah := formatRupiah(transaction.Amount)
+	msgText := fmt.Sprintf(
+		"Saved text ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s",
+		transaction.Category,
+		rupiah,
+		transaction.Notes,
+		spreadsheetLink,
+	)
+	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
+}
+
+// formatRupiah formats a string amount to Indonesian Rupiah currency
+func formatRupiah(amount string) string {
+	// Try to parse as float, fallback to original string
+	f, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		return "Rp " + amount
+	}
+	// Format with thousands separator
+	return fmt.Sprintf("Rp %s", formatThousands(int64(f)))
+}
+
+// formatThousands formats an integer with thousands separator
+func formatThousands(n int64) string {
+	s := fmt.Sprintf("%d", n)
+	var out []byte
+	for i, c := range s {
+		if i != 0 && (len(s)-i)%3 == 0 {
+			out = append(out, ',')
+		}
+		out = append(out, byte(c))
+	}
+	return string(out)
 }
 
 func downloadFile(bot *tgbotapi.BotAPI, fileID, localPath string) error {
