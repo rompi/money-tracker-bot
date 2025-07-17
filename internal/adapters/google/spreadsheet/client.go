@@ -48,12 +48,30 @@ func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string,
 		}},
 	}
 
-	// Update range to include column G
-	_, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
+	   // Update range to include column G
+	   _, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
+	   if err != nil {
+			   log.Fatalf("Unable to insert data to sheet: %v", err)
+	   }
 
-	if err != nil {
-		log.Fatalf("Unable to insert data to sheet: %v", err)
-	}
+	   // Fetch summary data from summary sheet
+	   summaryRange := "summary!A2:D12"
+	   summaryValues, err := s.Sheet.Spreadsheets.Values.Get(spreadsheetId, summaryRange).Do()
+	   if err != nil {
+			   log.Printf("Unable to get monthly budget from summary sheet: %v", err)
+			   return
+	   }
+
+	   fmt.Println("Monthly budget, expenses, and budget left per category:")
+	   for i, row := range summaryValues.Values {
+			   if len(row) >= 4 {
+					   fmt.Printf("Category: %v, Expenses: %v, Budget: %v, Budget Left: %v\n", row[0], row[1], row[2], row[3])
+			   } else if len(row) == 3 {
+					   fmt.Printf("Category: %v, Expenses: %v, Budget: %v, Budget Left: (missing)\n", row[0], row[1], row[2])
+			   } else {
+					   fmt.Printf("Row %d missing budget value\n", i+2)
+			   }
+	   }
 }
 
 func (s SpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) {
