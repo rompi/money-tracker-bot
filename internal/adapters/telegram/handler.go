@@ -158,21 +158,21 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 		return
 	}
 
-	t.TransactionService.SaveTransaction(*transaction)
-
-	// spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID") // no longer used in message
-
-	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
-	rupiah := formatRupiah(transaction.Amount)
-	msgText := fmt.Sprintf(
-		"Saved photo ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s",
-		transaction.Category,
-		rupiah,
-		transaction.Notes,
-		spreadsheetLink,
-	)
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
+   summary, _ := t.TransactionService.SaveTransaction(*transaction)
+	   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+	   rupiah := formatRupiah(transaction.Amount)
+   msgText := fmt.Sprintf(
+		   "Saved photo ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\nMonthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s",
+		   transaction.Category,
+		   rupiah,
+		   transaction.Notes,
+		   spreadsheetLink,
+		   summary.MonthlyExpenses,
+		   summary.MonthlyBudget,
+		   summary.BudgetLeft,
+   )
+	   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
 func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
@@ -182,19 +182,21 @@ func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
 		return
 	}
 
-	t.TransactionService.SaveTransaction(*transaction)
-
-	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
-	rupiah := formatRupiah(transaction.Amount)
-	msgText := fmt.Sprintf(
-		"Saved text ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s",
-		transaction.Category,
-		rupiah,
-		transaction.Notes,
-		spreadsheetLink,
-	)
-	bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
+   summary, _ := t.TransactionService.SaveTransaction(*transaction)
+	   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+	   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+	   rupiah := formatRupiah(transaction.Amount)
+   msgText := fmt.Sprintf(
+		   "Saved text ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\nMonthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s",
+		   transaction.Category,
+		   rupiah,
+		   transaction.Notes,
+		   spreadsheetLink,
+		   summary.MonthlyExpenses,
+		   summary.MonthlyBudget,
+		   summary.BudgetLeft,
+   )
+	   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
 // formatRupiah formats a string amount to Indonesian Rupiah currency

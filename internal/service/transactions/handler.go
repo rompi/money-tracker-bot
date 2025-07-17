@@ -1,7 +1,10 @@
 package transactions
 
+// Package transactions provides services for handling transactions, including saving and processing them from images or text inputs.
+
 import (
 	"context"
+	spreadsheet "money-tracker-bot/internal/adapters/google/spreadsheet"
 	transaction_domain "money-tracker-bot/internal/domain/transactions"
 	aiport "money-tracker-bot/internal/port/out/ai"
 	"os"
@@ -14,7 +17,7 @@ type TransactionService struct {
 
 // SpreadsheetServicePort abstracts spreadsheet operations for testability
 type SpreadsheetServicePort interface {
-	AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction)
+	AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) spreadsheet.CategorySummary
 	GetCellValue(ctx context.Context, spreadsheetId string)
 }
 
@@ -25,12 +28,10 @@ func NewTransactionService(ai aiport.AiPort, sheets SpreadsheetServicePort) *Tra
 	}
 }
 
-func (t *TransactionService) SaveTransaction(trx transaction_domain.Transaction) error {
-	// Implement the logic to save the transaction
-	// This is a placeholder implementation
+func (t *TransactionService) SaveTransaction(trx transaction_domain.Transaction) (spreadsheet.CategorySummary, error) {
 	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	t.SpreadsheetService.AppendRow(context.Background(), spreadsheetId, trx)
-	return nil
+	summary := t.SpreadsheetService.AppendRow(context.Background(), spreadsheetId, trx)
+	return summary, nil
 
 }
 

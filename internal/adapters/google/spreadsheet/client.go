@@ -1,5 +1,7 @@
 package spreadsheet
 
+// Package spreadsheet provides functionality to interact with Google Sheets API for managing transaction data.
+
 import (
 	"context"
 	"fmt"
@@ -10,6 +12,13 @@ import (
 	"google.golang.org/api/option"
 	"google.golang.org/api/sheets/v4"
 )
+
+type CategorySummary struct {
+   Category      string
+   MonthlyExpenses string
+   MonthlyBudget   string
+   BudgetLeft      string
+}
 
 type SpreadsheetService struct {
 	Sheet *sheets.Service
@@ -27,7 +36,7 @@ func NewSpreadsheetService() *SpreadsheetService {
 
 }
 
-func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) {
+func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) CategorySummary {
 	// Add createdAt as UTC+7 timestamp (column G)
 	loc, err := time.LoadLocation("Asia/Bangkok")
 	if err != nil {
@@ -48,30 +57,35 @@ func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string,
 		}},
 	}
 
-	   // Update range to include column G
-	   _, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
-	   if err != nil {
-			   log.Fatalf("Unable to insert data to sheet: %v", err)
-	   }
+	// Update range to include column G
+	_, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
+	if err != nil {
+		log.Fatalf("Unable to insert data to sheet: %v", err)
+	}
 
-	   // Fetch summary data from summary sheet
-	   summaryRange := "summary!A2:D12"
-	   summaryValues, err := s.Sheet.Spreadsheets.Values.Get(spreadsheetId, summaryRange).Do()
-	   if err != nil {
-			   log.Printf("Unable to get monthly budget from summary sheet: %v", err)
-			   return
-	   }
+	// Fetch summary data from summary sheet
+	summaryRange := "summary!A2:D12"
+	summaryValues, err := s.Sheet.Spreadsheets.Values.Get(spreadsheetId, summaryRange).Do()
+	if err != nil {
+		log.Printf("Unable to get monthly budget from summary sheet: %v", err)
+		return CategorySummary{}
+	}
 
-	   fmt.Println("Monthly budget, expenses, and budget left per category:")
-	   for i, row := range summaryValues.Values {
-			   if len(row) >= 4 {
-					   fmt.Printf("Category: %v, Expenses: %v, Budget: %v, Budget Left: %v\n", row[0], row[1], row[2], row[3])
-			   } else if len(row) == 3 {
-					   fmt.Printf("Category: %v, Expenses: %v, Budget: %v, Budget Left: (missing)\n", row[0], row[1], row[2])
-			   } else {
-					   fmt.Printf("Row %d missing budget value\n", i+2)
-			   }
-	   }
+	// Find the summary for the transaction's category
+	var result CategorySummary
+	for _, row := range summaryValues.Values {
+		if len(row) >= 4 && fmt.Sprintf("%v", row[0]) == trx.Category {
+		   result = CategorySummary{
+			   Category:         fmt.Sprintf("%v", row[0]),
+			   MonthlyExpenses:  fmt.Sprintf("%v", row[1]),
+			   MonthlyBudget:    fmt.Sprintf("%v", row[2]),
+			   BudgetLeft:       fmt.Sprintf("%v", row[3]),
+		   }
+			break
+		}
+	}
+	// Optionally handle missing category
+	return result
 }
 
 func (s SpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) {
