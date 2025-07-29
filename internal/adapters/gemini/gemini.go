@@ -87,6 +87,8 @@ func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath strin
 			log.Printf("Failed to parse JSON: %v\nResponse:\n%s", err, jsonText)
 			continue
 		}
+		// Ensure amount is positive
+		transaction.Amount = ensurePositiveAmount(transaction.Amount)
 	}
 
 	if err := os.Remove(imgPath); err != nil {
@@ -129,6 +131,8 @@ func (c *GeminiClient) TextToTransaction(ctx context.Context, message string) (*
 			log.Printf("Failed to parse JSON: %v\nResponse:\n%s", err, jsonText)
 			continue
 		}
+		// Ensure amount is positive
+		transaction.Amount = ensurePositiveAmount(transaction.Amount)
 	}
 	return &transaction, nil
 }
@@ -139,4 +143,10 @@ func trimJson(jsonText string) string {
 	jsonText = strings.TrimSuffix(jsonText, "```")
 	jsonText = strings.TrimSpace(jsonText)
 	return jsonText
+}
+
+// ensurePositiveAmount ensures the amount string is positive by removing any negative signs
+func ensurePositiveAmount(amount string) string {
+	// Remove any negative signs from the amount
+	return strings.TrimPrefix(amount, "-")
 }

@@ -50,7 +50,7 @@ func BuildPrompt(params PromptParams) string {
 	fields := fmt.Sprintf(`Fields:
   - title (summary of the transaction notes)
   - transaction_date (format always YYYY-MM-DD)
-  - amount (in rupiah, format 1,000,000 for transaction with amont 1 million. if it is 100k then output should be 100,000)
+  - amount (ALWAYS use positive numbers in rupiah. Format: 1,000,000 for 1 million, 100,000 for 100k. Never use negative numbers, the transaction type is determined by context words like "spent", "bought", "earned", "received")
   - notes (details of the transaction, containing items bought)
   - category (%s)`,
 		categoryStr)
@@ -93,13 +93,13 @@ No explanation, no formatting, no code blocks.
 
 Example:
 {
-  "title": "Transfer to ABC Cafe",
+  "title": "Spent on Lunch at ABC Cafe",
   "transaction_date": "2025-03-30",
-  "amount": "150",
-  "notes": "Lunch at ABC cafe",
+  "amount": "150,000",
+  "notes": "Lunch payment at ABC cafe - always use positive amounts regardless of whether it's spending or earning",
   "destination_number": "0524012911",
   "source_account": "Gopay",
-  "category": "Groceries",
+  "category": "Eating Out",
   "file_id": "%s"
 }`,
 		inputDesc, fields, dateLine, exampleFileID)
