@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"money-tracker-bot/internal/adapters/google/spreadsheet"
 	transaction_domain "money-tracker-bot/internal/domain/transactions"
 	aiport "money-tracker-bot/internal/port/out/ai"
 )
@@ -20,7 +21,7 @@ func (m *MockTransactionService) HandleImageInput(ctx context.Context, path, use
 	m.HandleImageInputCalled = true
 	return &transaction_domain.Transaction{Notes: "img notes", Amount: "2000"}, nil
 }
-func (m *MockTransactionService) SaveTransaction(tx transaction_domain.Transaction) error {
+func (m *MockTransactionService) SaveTransaction(tx transaction_domain.Transaction) (spreadsheet.CategorySummary, error) {
 	m.SaveTransactionCalled = true
-	return nil
+	return spreadsheet.CategorySummary{}, nil
 }

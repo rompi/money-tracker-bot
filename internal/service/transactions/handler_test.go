@@ -20,20 +20,23 @@ func (m *mockAiPort) TextToTransaction(ctx context.Context, message string) (*tr
 // DummySpreadsheetService implements only the methods needed for TransactionService
 type DummySpreadsheetService struct{}
 
-func (d *DummySpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) {
+func (d *DummySpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) spreadsheet.CategorySummary {
+	return spreadsheet.CategorySummary{}
 }
 func (d *DummySpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) {}
 
 func TestSaveTransaction(t *testing.T) {
 	ts := &TransactionService{
 		DefaultAiPort:      &mockAiPort{},
-		SpreadsheetService: &spreadsheet.MockSpreadsheetService{},
+		SpreadsheetService: &DummySpreadsheetService{},
 	}
 	trx := transaction_domain.Transaction{Title: "test"}
-	err := ts.SaveTransaction(trx)
+	summary, err := ts.SaveTransaction(trx)
 	if err != nil {
 		t.Errorf("expected no error, got: %v", err)
 	}
+	// CategorySummary is empty in test but that's ok for this test
+	_ = summary // we don't need to validate the summary contents in this test
 }
 
 func TestHandleImageInput(t *testing.T) {
