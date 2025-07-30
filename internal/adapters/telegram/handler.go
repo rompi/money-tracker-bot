@@ -176,6 +176,12 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 	   summary.Quota,
 	   summary.QuotaLeft,
    )
+   // Check budget and quota left, append Gemini's warning_message if needed
+   budgetLeft, _ := strconv.ParseFloat(summary.BudgetLeft, 64)
+   quotaLeft, _ := strconv.ParseFloat(summary.QuotaLeft, 64)
+   if (budgetLeft < 0 || quotaLeft < 0) && transaction.WarningMessage != "" {
+	   msgText += "\n\n⚠️ " + transaction.WarningMessage
+   }
    bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
@@ -204,6 +210,12 @@ func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
 	   summary.Quota,
 	   summary.QuotaLeft,
    )
+   // Check budget and quota left, append Gemini's warning_message if needed
+   budgetLeft, _ := strconv.ParseFloat(summary.BudgetLeft, 64)
+   quotaLeft, _ := strconv.ParseFloat(summary.QuotaLeft, 64)
+   if (budgetLeft < 0 || quotaLeft < 0) && transaction.WarningMessage != "" {
+	   msgText += "\n\n⚠️ " + transaction.WarningMessage
+   }
    bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
