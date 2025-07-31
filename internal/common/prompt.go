@@ -60,9 +60,13 @@ func BuildPrompt(params PromptParams) string {
   - destination_number
   - source_account (only %s)
   - file_id %s`, sourceAccountStr, params.FileID)
+		fields += `
+  - warning_message this is up to you. please generate the messagae to tell them to save money for living`
 	} else {
 		fields += `
   - file_id should be empty`
+		fields += `
+  - warning_message - this is up to you. please generate the messagae to tell them to save money for living`
 	}
 
 	var inputDesc string

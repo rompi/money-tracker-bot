@@ -159,20 +159,30 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 	}
 
    summary, _ := t.TransactionService.SaveTransaction(*transaction)
-	   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
-	   rupiah := formatRupiah(transaction.Amount)
+   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+   rupiah := formatRupiah(transaction.Amount)
    msgText := fmt.Sprintf(
-		   "Saved photo ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\nMonthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s",
-		   transaction.Category,
-		   rupiah,
-		   transaction.Notes,
-		   spreadsheetLink,
-		   summary.MonthlyExpenses,
-		   summary.MonthlyBudget,
-		   summary.BudgetLeft,
+	   "Saved photo ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\n"+
+		   "Monthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s\n"+
+		   "Monthly Quota: %s\nQuota Left: %s",
+	   transaction.Category,
+	   rupiah,
+	   transaction.Notes,
+	   spreadsheetLink,
+	   summary.MonthlyExpenses,
+	   summary.MonthlyBudget,
+	   summary.BudgetLeft,
+	   summary.Quota,
+	   summary.QuotaLeft,
    )
-	   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
+   // Check budget and quota left, append Gemini's warning_message if needed
+   budgetLeft, _ := strconv.ParseFloat(summary.BudgetLeft, 64)
+   quotaLeft, _ := strconv.ParseFloat(summary.QuotaLeft, 64)
+   if (budgetLeft < 0 || quotaLeft < 0) && transaction.WarningMessage != "" {
+	   msgText += "\n\n⚠️ " + transaction.WarningMessage
+   }
+   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
 func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
@@ -183,20 +193,30 @@ func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
 	}
 
    summary, _ := t.TransactionService.SaveTransaction(*transaction)
-	   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
-	   rupiah := formatRupiah(transaction.Amount)
+   spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
+   spreadsheetLink := "https://docs.google.com/spreadsheets/d/" + spreadsheetId
+   rupiah := formatRupiah(transaction.Amount)
    msgText := fmt.Sprintf(
-		   "Saved text ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\nMonthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s",
-		   transaction.Category,
-		   rupiah,
-		   transaction.Notes,
-		   spreadsheetLink,
-		   summary.MonthlyExpenses,
-		   summary.MonthlyBudget,
-		   summary.BudgetLeft,
+	   "Saved text ✅\nCategory: %s\nAmount: %s\nNotes: %s\nLink: %s\n"+
+		   "Monthly Expenses: %s\nMonthly Budget: %s\nBudget Left: %s\n"+
+		   "Monthly Quota: %s\nQuota Left: %s",
+	   transaction.Category,
+	   rupiah,
+	   transaction.Notes,
+	   spreadsheetLink,
+	   summary.MonthlyExpenses,
+	   summary.MonthlyBudget,
+	   summary.BudgetLeft,
+	   summary.Quota,
+	   summary.QuotaLeft,
    )
-	   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
+   // Check budget and quota left, append Gemini's warning_message if needed
+   budgetLeft, _ := strconv.ParseFloat(summary.BudgetLeft, 64)
+   quotaLeft, _ := strconv.ParseFloat(summary.QuotaLeft, 64)
+   if (budgetLeft < 0 || quotaLeft < 0) && transaction.WarningMessage != "" {
+	   msgText += "\n\n⚠️ " + transaction.WarningMessage
+   }
+   bot.Send(tgbotapi.NewMessage(msg.Chat.ID, msgText))
 }
 
 // formatRupiah formats a string amount to Indonesian Rupiah currency
