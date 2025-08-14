@@ -14,12 +14,12 @@ import (
 )
 
 type CategorySummary struct {
-   Category        string
-   MonthlyExpenses string
-   MonthlyBudget   string
-   BudgetLeft      string
-   Quota           string
-   QuotaLeft       string
+	Category        string
+	MonthlyExpenses string
+	MonthlyBudget   string
+	BudgetLeft      string
+	Quota           string
+	QuotaLeft       string
 }
 
 type SpreadsheetService struct {
@@ -39,66 +39,66 @@ func NewSpreadsheetService() *SpreadsheetService {
 }
 
 func (s SpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) CategorySummary {
-   // Add createdAt as UTC+7 timestamp (column G)
-   loc, err := time.LoadLocation("Asia/Bangkok")
-   if err != nil {
-	   log.Fatalf("Unable to load Asia/Bangkok timezone: %v", err)
-   }
-   createdAt := time.Now().In(loc).Format("2006-01-02 15:04:05")
+	// Add createdAt as UTC+7 timestamp (column G)
+	loc, err := time.LoadLocation("Asia/Bangkok")
+	if err != nil {
+		log.Fatalf("Unable to load Asia/Bangkok timezone: %v", err)
+	}
+	createdAt := time.Now().In(loc).Format("2006-01-02 15:04:05")
 
-   values := &sheets.ValueRange{
-	   Values: [][]interface{}{ {
-		   trx.TransactionDate,
-		   trx.Category,
-		   "",
-		   trx.Notes,
-		   trx.Amount,
-		   trx.CreatedBy,
-		   trx.FileID,
-		   createdAt,
-	   } },
-   }
+	values := &sheets.ValueRange{
+		Values: [][]interface{}{{
+			trx.TransactionDate,
+			trx.Category,
+			"",
+			trx.Notes,
+			trx.Amount,
+			trx.CreatedBy,
+			trx.FileID,
+			createdAt,
+		}},
+	}
 
-   // Update range to include column G
-   _, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
-   if err != nil {
-	   log.Fatalf("Unable to insert data to sheet: %v", err)
-   }
+	// Update range to include column G
+	_, err = s.Sheet.Spreadsheets.Values.Append(spreadsheetId, "detailed!A:G", values).ValueInputOption("USER_ENTERED").Do()
+	if err != nil {
+		log.Fatalf("Unable to insert data to sheet: %v", err)
+	}
 
-   // Fetch summary data from summary sheet (now includes columns E and F)
-   summaryRange := "summary!A2:F12"
-   summaryValues, err := s.Sheet.Spreadsheets.Values.Get(spreadsheetId, summaryRange).Do()
-   if err != nil {
-	   log.Printf("Unable to get monthly budget from summary sheet: %v", err)
-	   return CategorySummary{}
-   }
+	// Fetch summary data from summary sheet (now includes columns E and F)
+	summaryRange := "summary!A2:F12"
+	summaryValues, err := s.Sheet.Spreadsheets.Values.Get(spreadsheetId, summaryRange).Do()
+	if err != nil {
+		log.Printf("Unable to get monthly budget from summary sheet: %v", err)
+		return CategorySummary{}
+	}
 
-   // Find the summary for the transaction's category
-   var result CategorySummary
-   for _, row := range summaryValues.Values {
-	   if len(row) >= 4 && fmt.Sprintf("%v", row[0]) == trx.Category {
-		   // Defensive: handle missing quota columns gracefully
-		   quota := ""
-		   quotaLeft := ""
-		   if len(row) > 4 {
-			   quota = fmt.Sprintf("%v", row[4])
-		   }
-		   if len(row) > 5 {
-			   quotaLeft = fmt.Sprintf("%v", row[5])
-		   }
-		   result = CategorySummary{
-			   Category:        fmt.Sprintf("%v", row[0]),
-			   MonthlyExpenses: fmt.Sprintf("%v", row[1]),
-			   MonthlyBudget:   fmt.Sprintf("%v", row[2]),
-			   BudgetLeft:      fmt.Sprintf("%v", row[3]),
-			   Quota:           quota,
-			   QuotaLeft:       quotaLeft,
-		   }
-		   break
-	   }
-   }
-   // Optionally handle missing category
-   return result
+	// Find the summary for the transaction's category
+	var result CategorySummary
+	for _, row := range summaryValues.Values {
+		if len(row) >= 4 && fmt.Sprintf("%v", row[0]) == trx.Category {
+			// Defensive: handle missing quota columns gracefully
+			quota := ""
+			quotaLeft := ""
+			if len(row) > 4 {
+				quota = fmt.Sprintf("%v", row[4])
+			}
+			if len(row) > 5 {
+				quotaLeft = fmt.Sprintf("%v", row[5])
+			}
+			result = CategorySummary{
+				Category:        fmt.Sprintf("%v", row[0]),
+				MonthlyExpenses: fmt.Sprintf("%v", row[1]),
+				MonthlyBudget:   fmt.Sprintf("%v", row[2]),
+				BudgetLeft:      fmt.Sprintf("%v", row[3]),
+				Quota:           quota,
+				QuotaLeft:       quotaLeft,
+			}
+			break
+		}
+	}
+	// Optionally handle missing category
+	return result
 }
 
 func (s SpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) {

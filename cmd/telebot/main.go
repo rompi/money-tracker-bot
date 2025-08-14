@@ -37,16 +37,25 @@ func startBotWithDeps(telegramToken, apiKey string, spreadsheetService Spreadshe
 	return nil
 }
 
-func startBot() error {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found or failed to load, proceeding with system env")
-	}
+var testBotDeps struct {
+       SpreadsheetService SpreadsheetService
+       GeminiClient GeminiClient
+       Override bool
+}
 
-	telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	googleSpreadsheet := spreadsheet.NewSpreadsheetService()
-	geminiClient := gemini.NewClient(apiKey)
-	return startBotWithDeps(telegramToken, apiKey, googleSpreadsheet, geminiClient)
+func startBot() error {
+       if err := godotenv.Load(); err != nil {
+	       log.Println("No .env file found or failed to load, proceeding with system env")
+       }
+
+       telegramToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+       apiKey := os.Getenv("GEMINI_API_KEY")
+       if testBotDeps.Override {
+	       return startBotWithDeps(telegramToken, apiKey, testBotDeps.SpreadsheetService, testBotDeps.GeminiClient)
+       }
+       googleSpreadsheet := spreadsheet.NewSpreadsheetService()
+       geminiClient := gemini.NewClient(apiKey)
+       return startBotWithDeps(telegramToken, apiKey, googleSpreadsheet, geminiClient)
 }
 
 // ErrEnvVarMissing is returned when a required environment variable is missing.

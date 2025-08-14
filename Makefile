@@ -31,8 +31,8 @@ clean:
 ## Run tests
 .PHONY: test
 test:
-	@echo "Running tests..."
-	go test ./...
+	@echo "Running tests with coverage..."
+	go test -cover ./...
 
 ## Format code
 .PHONY: fmt

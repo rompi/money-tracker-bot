@@ -2,8 +2,8 @@ package spreadsheet
 
 import (
 	"context"
-	"testing"
 	transaction_domain "money-tracker-bot/internal/domain/transactions"
+	"testing"
 )
 
 func TestCategorySummary_WithQuota(t *testing.T) {
@@ -33,7 +33,7 @@ func TestCategorySummary_WithQuota(t *testing.T) {
 
 func TestCategorySummary_MissingQuota(t *testing.T) {
 	// Simulate a row with only 4 columns (no quota info)
-	row := []interface{}{ "Food", "1000", "5000", "4000" }
+	row := []interface{}{"Food", "1000", "5000", "4000"}
 	var quota, quotaLeft string
 	if len(row) > 4 {
 		quota = row[4].(string)
