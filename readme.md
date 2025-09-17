@@ -44,6 +44,12 @@ This project is a Telegram bot written in Go that:
 
 ---
 
+## 🧭 Contributor Guide
+
+New contributors should start with `AGENTS.md` for repository conventions, workflows, and security tips.
+
+---
+
 ## ⚙️ Requirements
 
 - Go 1.21+
@@ -132,4 +138,3 @@ MIT — use freely and modify as needed.
 ## 🙇‍♂️ Questions or Suggestions?
 
 Open an issue or message me on Telegram.
-
