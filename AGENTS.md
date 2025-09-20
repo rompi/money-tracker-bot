@@ -1,5 +1,8 @@
 # Repository Guidelines
 
+## Agent Instructions
+**IMPORTANT**: Agents should ignore all files under the `plan/` directory unless explicitly instructed by the user to refer to those files. The planning documents are for reference only and should not influence regular development tasks.
+
 ## Project Structure & Module Organization
 This Go module targets Go 1.23 and follows a hexagonal architecture. The executable entry point lives in `cmd/telebot`, while shared logic sits in `internal/` with adapters (Telegram, Gemini, Google Sheets), domain models, services, and ports kept isolated. Reference material is in `docs/`, and configuration templates live in `.env.example` and `google-service-account.json`.
 
