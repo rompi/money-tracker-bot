@@ -17,8 +17,8 @@ type TransactionService struct {
 
 // SpreadsheetServicePort abstracts spreadsheet operations for testability
 type SpreadsheetServicePort interface {
-	AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) spreadsheet.CategorySummary
-	GetCellValue(ctx context.Context, spreadsheetId string)
+	AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) (spreadsheet.CategorySummary, error)
+	GetCellValue(ctx context.Context, spreadsheetId string) error
 }
 
 func NewTransactionService(ai aiport.AiPort, sheets SpreadsheetServicePort) *TransactionService {
@@ -30,9 +30,11 @@ func NewTransactionService(ai aiport.AiPort, sheets SpreadsheetServicePort) *Tra
 
 func (t *TransactionService) SaveTransaction(trx transaction_domain.Transaction) (spreadsheet.CategorySummary, error) {
 	spreadsheetId := os.Getenv("GOOGLE_SPREADSHEET_ID")
-	summary := t.SpreadsheetService.AppendRow(context.Background(), spreadsheetId, trx)
+	summary, err := t.SpreadsheetService.AppendRow(context.Background(), spreadsheetId, trx)
+	if err != nil {
+		return spreadsheet.CategorySummary{}, err
+	}
 	return summary, nil
-
 }
 
 func (t *TransactionService) HandleImageInput(ctx context.Context, imagePath string, uploader string, aiPort aiport.AiPort) (*transaction_domain.Transaction, error) {

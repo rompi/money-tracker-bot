@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	transaction_domain "money-tracker-bot/internal/domain/transactions"
+	"money-tracker-bot/internal/errors"
 	"os"
 	"strings"
 	"time"
@@ -28,21 +29,29 @@ type GeminiClient struct {
 }
 
 // NewClient creates a new GeminiClient
-func NewClient(apiKey string) *GeminiClient {
-	client, _ := genai.NewClient(context.Background(), option.WithAPIKey(apiKey))
+func NewClient(apiKey string) (*GeminiClient, error) {
+	client, err := genai.NewClient(context.Background(), option.WithAPIKey(apiKey))
+	if err != nil {
+		return nil, errors.NewGeminiError("failed to create Gemini client", err).
+			WithContext("api_key_provided", apiKey != "").
+			WithComponent("gemini-client")
+	}
 	return &GeminiClient{
 		GenAi: client,
 		Model: client.GenerativeModel("gemini-2.0-flash"),
-	}
+	}, nil
 }
 
 // GenerateContent sends a prompt to Gemini and returns the response text
-func (c *GeminiClient) GenerateContent(ctx context.Context, prompt string) {
+func (c *GeminiClient) GenerateContent(ctx context.Context, prompt string) error {
 	_, err := c.Model.GenerateContent(ctx, genai.Text(prompt))
 	if err != nil {
-		log.Fatal(err)
+		return errors.NewGeminiError("failed to generate content", err).
+			WithContext("prompt_length", len(prompt)).
+			WithComponent("gemini-client")
 	}
 	// For testability, we do not process the response here
+	return nil
 }
 
 func (c *GeminiClient) ReadImageToTransaction(ctx context.Context, imgPath string) (*transaction_domain.Transaction, error) {
