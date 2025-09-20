@@ -10,7 +10,7 @@ import (
 
 type DummyAiPort struct{}
 
-func (d *DummyAiPort) GenerateContent(ctx context.Context, prompt string) {}
+func (d *DummyAiPort) GenerateContent(ctx context.Context, prompt string) error { return nil }
 func (d *DummyAiPort) ReadImageToTransaction(ctx context.Context, imagePath string) (*transaction_domain.Transaction, error) {
 	return nil, nil
 }

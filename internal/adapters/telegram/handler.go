@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"money-tracker-bot/internal/errors"
 	"money-tracker-bot/internal/service/transactions"
 	"net/http"
 	"os"
@@ -26,15 +27,17 @@ type TelegramHandler struct {
 }
 
 // NewTelegramHandler creates a TelegramHandler with a real bot (for production)
-func NewTelegramHandler(token string, transactionService transactions.ITransaction) *TelegramHandler {
+func NewTelegramHandler(token string, transactionService transactions.ITransaction) (*TelegramHandler, error) {
 	bot, err := tgbotapi.NewBotAPI(token)
 	if err != nil {
-		log.Panic(err)
+		return nil, errors.NewTelegramCriticalError("failed to create Telegram bot", err).
+			WithContext("token_provided", token != "").
+			WithComponent("telegram-handler")
 	}
 	return &TelegramHandler{
 		Telebot:            bot,
 		TransactionService: transactionService,
-	}
+	}, nil
 }
 
 // NewTelegramHandlerWithBot allows injecting a bot instance (for testing)
@@ -54,10 +57,12 @@ type StoredFile struct {
 
 var storedFiles []StoredFile
 
-func (t *TelegramHandler) Start() {
+func (t *TelegramHandler) Start() error {
 	realBot, ok := t.Telebot.(*tgbotapi.BotAPI)
 	if !ok {
-		log.Panic("Telebot is not a *tgbotapi.BotAPI")
+		return errors.NewTelegramCriticalError("bot type assertion failed", nil).
+			WithContext("expected_type", "*tgbotapi.BotAPI").
+			WithComponent("telegram-handler")
 	}
 	realBot.Debug = true
 	log.Printf("Authorized on account %s", realBot.Self.UserName)
@@ -95,6 +100,7 @@ func (t *TelegramHandler) Start() {
 			t.handleMessage(t.Telebot, update.Message)
 		}
 	}
+	return nil
 }
 
 func handleListCommand(bot BotAPI, msg *tgbotapi.Message) {
@@ -152,7 +158,8 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 		Date:     time.Now(),
 	})
 
-	transaction, err := t.TransactionService.HandleImageInput(context.TODO(), localPath, msg.From.UserName, nil)
+	ctx := context.Background()
+	transaction, err := t.TransactionService.HandleImageInput(ctx, localPath, msg.From.UserName, nil)
 	if err != nil {
 		log.Println("Error handling image input:", err)
 		return
@@ -186,7 +193,8 @@ func (t *TelegramHandler) handlePhoto(bot BotAPI, msg *tgbotapi.Message) {
 }
 
 func (t *TelegramHandler) handleMessage(bot BotAPI, msg *tgbotapi.Message) {
-	transaction, err := t.TransactionService.HandleTextInput(context.TODO(), msg.Text, msg.From.UserName, nil)
+	ctx := context.Background()
+	transaction, err := t.TransactionService.HandleTextInput(ctx, msg.Text, msg.From.UserName, nil)
 	if err != nil {
 		log.Println("Error handling text input:", err)
 		return

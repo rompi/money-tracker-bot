@@ -5,6 +5,7 @@ import (
 	"money-tracker-bot/internal/adapters/gemini"
 	"money-tracker-bot/internal/adapters/google/spreadsheet"
 	"money-tracker-bot/internal/adapters/telegram"
+	"money-tracker-bot/internal/errors"
 	"money-tracker-bot/internal/service/transactions"
 	"os"
 
@@ -29,9 +30,14 @@ func startBotWithDeps(telegramToken, apiKey string, spreadsheetService Spreadshe
 	if s, ok := spreadsheetService.(*spreadsheet.SpreadsheetService); ok {
 		if g, ok := geminiClient.(*gemini.GeminiClient); ok {
 			transactionService := transactions.NewTransactionService(g, s)
-			telegramHandler := telegram.NewTelegramHandler(telegramToken, transactionService)
+			telegramHandler, err := telegram.NewTelegramHandler(telegramToken, transactionService)
+			if err != nil {
+				return err
+			}
 			log.Println("Telegram bot started")
-			telegramHandler.Start()
+			if err := telegramHandler.Start(); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -53,8 +59,14 @@ func startBot() error {
        if testBotDeps.Override {
 	       return startBotWithDeps(telegramToken, apiKey, testBotDeps.SpreadsheetService, testBotDeps.GeminiClient)
        }
-       googleSpreadsheet := spreadsheet.NewSpreadsheetService()
-       geminiClient := gemini.NewClient(apiKey)
+       googleSpreadsheet, err := spreadsheet.NewSpreadsheetService()
+       if err != nil {
+	       return err
+       }
+       geminiClient, err := gemini.NewClient(apiKey)
+       if err != nil {
+	       return err
+       }
        return startBotWithDeps(telegramToken, apiKey, googleSpreadsheet, geminiClient)
 }
 
@@ -67,6 +79,19 @@ func (e ErrEnvVarMissing) Error() string {
 
 func main() {
 	if err := startBot(); err != nil {
-		log.Fatal(err)
+		// Use structured error handling instead of log.Fatal
+		appErr, ok := err.(*errors.AppError)
+		if ok {
+			errors.HandleCriticalError(appErr, "application startup")
+			if errors.IsCriticalError(appErr) {
+				errors.ExitGracefully(appErr, 1)
+			}
+		} else {
+			// Handle non-AppError types
+			criticalErr := errors.NewConfigError("application startup failed", err).
+				WithComponent("main")
+			errors.HandleCriticalError(criticalErr, "application startup")
+			errors.ExitGracefully(criticalErr, 1)
+		}
 	}
 }

@@ -9,7 +9,7 @@ import (
 
 type mockAiPort struct{}
 
-func (m *mockAiPort) GenerateContent(ctx context.Context, prompt string) {}
+func (m *mockAiPort) GenerateContent(ctx context.Context, prompt string) error { return nil }
 func (m *mockAiPort) ReadImageToTransaction(ctx context.Context, imagePath string) (*transaction_domain.Transaction, error) {
 	return &transaction_domain.Transaction{Title: "mocked"}, nil
 }
@@ -20,10 +20,10 @@ func (m *mockAiPort) TextToTransaction(ctx context.Context, message string) (*tr
 // DummySpreadsheetService implements only the methods needed for TransactionService
 type DummySpreadsheetService struct{}
 
-func (d *DummySpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) spreadsheet.CategorySummary {
-	return spreadsheet.CategorySummary{}
+func (d *DummySpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) (spreadsheet.CategorySummary, error) {
+	return spreadsheet.CategorySummary{}, nil
 }
-func (d *DummySpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) {}
+func (d *DummySpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) error { return nil }
 
 func TestSaveTransaction(t *testing.T) {
 	ts := &TransactionService{
