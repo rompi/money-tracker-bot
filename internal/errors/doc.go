@@ -19,29 +19,32 @@
 // # Usage Patterns
 //
 // Replace log.Fatal calls:
-//   // Before:
-//   if err != nil {
-//       log.Fatalf("Failed to create service: %v", err)
-//   }
 //
-//   // After:
-//   if err != nil {
-//       return nil, errors.NewConfigError("failed to create service", err)
-//   }
+//	// Before:
+//	if err != nil {
+//	    log.Fatalf("Failed to create service: %v", err)
+//	}
+//
+//	// After:
+//	if err != nil {
+//	    return nil, errors.NewConfigError("failed to create service", err)
+//	}
 //
 // Add context to errors:
-//   err := errors.NewTelegramError("message send failed", cause)
-//   err.WithContext("user_id", userID)
-//   err.WithContext("message_type", "photo")
+//
+//	err := errors.NewTelegramError("message send failed", cause)
+//	err.WithContext("user_id", userID)
+//	err.WithContext("message_type", "photo")
 //
 // Handle errors gracefully:
-//   if err := operation(); err != nil {
-//       if errors.IsRetryableError(err) {
-//           // Implement retry logic
-//       } else {
-//           errors.HandleError(err, "operation context")
-//       }
-//   }
+//
+//	if err := operation(); err != nil {
+//	    if errors.IsRetryableError(err) {
+//	        // Implement retry logic
+//	    } else {
+//	        errors.HandleError(err, "operation context")
+//	    }
+//	}
 //
 // # Error Codes
 //

@@ -124,10 +124,10 @@ func TestErrorConstructors(t *testing.T) {
 	cause := fmt.Errorf("underlying error")
 
 	tests := []struct {
-		name             string
-		constructor      func(string, error) *AppError
-		expectedCode     string
-		expectedSeverity Severity
+		name              string
+		constructor       func(string, error) *AppError
+		expectedCode      string
+		expectedSeverity  Severity
 		expectedComponent string
 	}{
 		{"NewConfigError", NewConfigError, ErrCodeConfig, SeverityCritical, "config"},

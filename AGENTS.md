@@ -57,18 +57,25 @@ errors.HandleError(err, "operation context")
 - `make fmt && make lint` - Format and check code
 
 ## Key Guidelines
-1. **Always use error constructors** from `internal/errors`
-2. **Add context** to errors for debugging
-3. **Return errors** instead of using `log.Fatal`
-4. **Follow hexagonal boundaries** - no external SDKs in domain
-5. **Write tests** for both success and error cases
+1. **Follow coding standards** in `CODING-GUIDELINES.md` for all development
+2. **Always use error constructors** from `internal/errors`
+3. **Add context** to errors for debugging
+4. **Return errors** instead of using `log.Fatal`
+5. **Follow hexagonal boundaries** - no external SDKs in domain
+6. **Write tests** for both success and error cases
 
 ## Development Flow for New Code
 When writing new code, follow this mandatory checklist:
 
-### 1. Documentation Updates
+### 1. Code Quality Standards
+- **Follow all standards** in `CODING-GUIDELINES.md`
+- **Use proper Go conventions** (naming, formatting, imports)
+- **Apply hexagonal architecture** principles
+- **Implement proper error handling** with context
+
+### 2. Documentation Updates
 - **Update package AI.md**: Reflect feature/business changes and new patterns
-- **Function documentation**: Add docstrings with sample input/output for each function
+- **Function documentation**: Add comprehensive docstrings per `CODING-GUIDELINES.md`
 ```go
 // ProcessTransaction analyzes transaction text and extracts structured data.
 // Input: "Coffee at Starbucks $4.50"
@@ -76,13 +83,14 @@ When writing new code, follow this mandatory checklist:
 func ProcessTransaction(text string) (*Transaction, error) {
 ```
 
-### 2. Test Coverage Requirements
+### 3. Test Coverage Requirements
 - **Unit tests mandatory** for all new functions
 - **Minimum 85% coverage** for new code
 - **Test both success and error paths**
+- **Follow testing patterns** in `CODING-GUIDELINES.md`
 - Run `go test -cover ./...` to verify coverage
 
-### 3. Diagrams (When Needed)
+### 4. Diagrams (When Needed)
 Use PlantUML format for architectural diagrams:
 ```plantuml
 @startuml
@@ -103,12 +111,14 @@ TB --> User: Confirmation
 @enduml
 ```
 
-### 4. Pre-commit Checklist
+### 5. Pre-commit Checklist
+- [ ] Code follows `CODING-GUIDELINES.md` standards
 - [ ] Package AI.md updated
 - [ ] Function docstrings with examples added
 - [ ] Unit tests written (≥85% coverage)
 - [ ] `make test` passes
 - [ ] `make fmt && make lint` clean
+- [ ] Security guidelines followed
 - [ ] Diagrams added if architectural changes
 
 ## Current Branch: feature/phase1-error-infrastructure

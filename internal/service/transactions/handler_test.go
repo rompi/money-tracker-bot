@@ -23,7 +23,9 @@ type DummySpreadsheetService struct{}
 func (d *DummySpreadsheetService) AppendRow(ctx context.Context, spreadsheetId string, trx transaction_domain.Transaction) (spreadsheet.CategorySummary, error) {
 	return spreadsheet.CategorySummary{}, nil
 }
-func (d *DummySpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) error { return nil }
+func (d *DummySpreadsheetService) GetCellValue(ctx context.Context, spreadsheetId string) error {
+	return nil
+}
 
 func TestSaveTransaction(t *testing.T) {
 	ts := &TransactionService{

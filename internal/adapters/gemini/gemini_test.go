@@ -9,7 +9,7 @@ import (
 
 type mockModel struct {
 	GenerateContentCalled bool
-	ResponseText         string
+	ResponseText          string
 }
 
 func (m *mockModel) GenerateContent(ctx context.Context, parts ...genai.Part) (*genai.GenerateContentResponse, error) {
@@ -46,26 +46,26 @@ func TestGeminiClient_GenerateContent(t *testing.T) {
 func TestGeminiClient_TextToTransaction(t *testing.T) {
 	testCases := []struct {
 		name           string
-		input         string
-		responseJSON  string
+		input          string
+		responseJSON   string
 		expectedAmount string
 	}{
 		{
 			name:           "Positive amount",
-			input:         "spent 100 on groceries",
-			responseJSON:  `{"amount": "100", "title": "Groceries", "notes": "test"}`,
+			input:          "spent 100 on groceries",
+			responseJSON:   `{"amount": "100", "title": "Groceries", "notes": "test"}`,
 			expectedAmount: "100",
 		},
 		{
 			name:           "Negative amount",
-			input:         "spent -100 on groceries",
-			responseJSON:  `{"amount": "-100", "title": "Groceries", "notes": "test"}`,
+			input:          "spent -100 on groceries",
+			responseJSON:   `{"amount": "-100", "title": "Groceries", "notes": "test"}`,
 			expectedAmount: "100",
 		},
 		{
 			name:           "Amount with currency",
-			input:         "spent $100 on groceries",
-			responseJSON:  `{"amount": "100", "title": "Groceries", "notes": "test"}`,
+			input:          "spent $100 on groceries",
+			responseJSON:   `{"amount": "100", "title": "Groceries", "notes": "test"}`,
 			expectedAmount: "100",
 		},
 	}
